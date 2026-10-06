@@ -30,9 +30,8 @@ def parser() -> argparse.ArgumentParser:
     comparison.add_argument("flow1", help="First workflow name")
     comparison.add_argument("flow2", help="Second workflow name")
     merging = commands.add_parser("merge", help="Merge prompt text into merge/<prompt-name>.txt")
-    merging.add_argument("flow1", help="First workflow name")
-    merging.add_argument("flow2", help="Second workflow name")
-    merging.add_argument("--base", required=True, help="Common base workflow")
+    merging.add_argument("flow1", help="Source workflow (e.g. version1)")
+    merging.add_argument("flow2", help="Target workflow (e.g. master)")
     for command in (listing, comparison, merging):
         command.add_argument("--base-url", default=os.environ.get("FLOW_BASE_URL", "https://int-dev-dj-agent-platform-api.vir-dev.onservo.com"), help="Platform API URL (default: FLOW_BASE_URL or deployed dev API)")
         command.add_argument("--env", choices=["dev", "prod"], help="Workflow storage environment (default: platform default)")
@@ -77,7 +76,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         token = os.environ.get("AG_UI_TOKEN", "")
         if args.command == "merge":
-            labels = (args.base, args.flow1, args.flow2)
+            labels = (args.flow1, args.flow2)
             workflows = [get_workflow(args.base_url, token, name, args.env, args.timeout) for name in labels]
             prompt_client = PromptClient(args.timeout)
             maps = []
@@ -87,7 +86,7 @@ def main(argv: list[str] | None = None) -> int:
                     raise PlatformError(f"Cannot merge unresolved prompts in {name}: {', '.join(unresolved)}.")
                 maps.append(resolved)
             names = workflow_prompt_names(*workflows)
-            conflicts = write_merges(*maps, names, labels)
+            conflicts = write_merges({}, *maps, names, ("", *labels))
             return 2 if conflicts else 0
         if args.command == "compare":
             left = get_workflow(args.base_url, token, args.flow1, args.env, args.timeout)

@@ -20,7 +20,11 @@ def merge_text(base: str, left: str, right: str, labels: tuple[str, str, str]) -
         if chunks and not chunks[-1].endswith(("\n", "\r")):
             chunks.append("\n")
         _, original, a, b = group
-        for marker, content in (("<<<<<<< " + labels[1], a), ("||||||| " + labels[0], original), ("=======", b)):
+        sections = [("<<<<<<< " + labels[1], a)]
+        if labels[0]:
+            sections.append(("||||||| " + labels[0], original))
+        sections.append(("=======", b))
+        for marker, content in sections:
             chunks.append(marker + "\n")
             text = "".join(content)
             chunks.append(text)

@@ -46,8 +46,13 @@ class MergeTests(unittest.TestCase):
     def test_workflow_merge_cli(self):
         workflows = [
             {"nodes": [{"id": "step", "tool": "llm_call", "args": {"prompt": text}}]}
-            for text in ["original", "left", "right"]
+            for text in ["left", "right"]
         ]
         with patch("cli.get_workflow", side_effect=workflows), patch("cli.write_merges", return_value=True) as writer:
-            self.assertEqual(main(["merge", "a", "b", "--base", "original"]), 2)
-        self.assertEqual(writer.call_args.args[:3], ({"step": "original"}, {"step": "left"}, {"step": "right"}))
+            self.assertEqual(main(["merge", "version1", "master"]), 2)
+        self.assertEqual(writer.call_args.args[:3], ({}, {"step": "left"}, {"step": "right"}))
+
+    def test_two_way_merge_marks_differences(self):
+        text, conflict = merge_text("", "source", "target", ("", "version1", "master"))
+        self.assertTrue(conflict)
+        self.assertEqual(text, "<<<<<<< version1\nsource\n=======\ntarget\n>>>>>>> master\n")
