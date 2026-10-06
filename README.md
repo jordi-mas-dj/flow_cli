@@ -54,9 +54,3 @@ uv run cli.py merge version1 master
 No common base is required. Identical prompts and prompts present on only one side are carried through. Differing prompts get `<<<<<<< version1`, `=======`, and `>>>>>>> master` markers for manual resolution. Results are saved on disk in `merge/`. You are responsible for reviewing the files, resolving conflicts, and uploading the approved prompts to update the target workflow. The tool does not merge workflow definitions or publish changes. Existing output files must be moved before rerunning.
 
 Exit codes: `0` for success, `1` for errors, and `2` when merge files contain conflicts.
-
-## Tests
-
-```sh
-uv run python -m unittest discover -s tests
-```
