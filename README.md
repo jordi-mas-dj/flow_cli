@@ -31,22 +31,27 @@ Run from the repository directory; uv installs dependencies automatically:
 uv run cli.py list
 uv run cli.py list --search summary --format names
 uv run cli.py compare version1 master
-uv run cli.py merge version1 master
 ```
 
 `list` shows names, dev/prod versions, and descriptions. Names are prefixed with `*` in table and names output. Use `--format json` for the full listing data.
 
 `compare` shows differences in saved prompt fields, resolved prompt text, and full workflow definitions. Nodes match by ID. `-` indicates the first workflow and `+` the second. LangSmith references preserve pinned versions; unversioned references retrieve the current prompt.
 
+Tool-default prompts, tool-version references such as `V7`, and internal prompt-store references cannot be retrieved through LangSmith. Comparison reports unresolved references; merge stops if it encounters one. Failed LangSmith retrievals also stop the operation.
+
+For command options, run `uv run cli.py <command> --help`.
+
+## Merge operation
+
+```sh
+uv run cli.py merge version1 master
+```
+
 `merge version1 master` writes prompt text to `merge/<prompt-name>.txt` in the current directory. It uses the target prompt name without its commit suffix, falling back to the node ID for inline prompts. Unsafe filename characters become `_`; filename collisions are errors.
 
 No common base is required. Identical prompts and prompts present on only one side are carried through. Differing prompts get `<<<<<<< version1`, `=======`, and `>>>>>>> master` markers for manual resolution. This prepares local text files; it does not merge workflow definitions or publish changes. Existing output files must be moved before rerunning.
 
-Tool-default prompts, tool-version references such as `V7`, and internal prompt-store references cannot be retrieved through LangSmith. Comparison reports unresolved references; merge stops if it encounters one. Failed LangSmith retrievals also stop the operation.
-
 Exit codes: `0` for success, `1` for errors, and `2` when merge files contain conflicts.
-
-For command options, run `uv run cli.py <command> --help`.
 
 ## Tests
 
