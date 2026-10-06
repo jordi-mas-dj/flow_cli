@@ -34,7 +34,6 @@ def parser() -> argparse.ArgumentParser:
     merging.add_argument("flow2", help="Second workflow name")
     merging.add_argument("--base", required=True, help="Common base workflow")
     for command in (listing, comparison, merging):
-        command.add_argument("--token", default=None, help="Okta access token (UI_TOKEN takes precedence; fallback: FLOW_TOKEN)")
         command.add_argument("--base-url", default=os.environ.get("FLOW_BASE_URL", "https://int-dev-dj-agent-platform-api.vir-dev.onservo.com"), help="Platform API URL (default: FLOW_BASE_URL or deployed dev API)")
         command.add_argument("--env", choices=["dev", "prod"], help="Workflow storage environment (default: platform default)")
         command.add_argument("--timeout", type=positive_timeout, default=30, help="Request timeout in seconds (default: 30)")
@@ -76,7 +75,7 @@ def main(argv: list[str] | None = None) -> int:
     load_dotenv(Path(__file__).resolve().parent / ".env", override=False)
     args = parser().parse_args(argv)
     try:
-        token = os.environ.get("UI_TOKEN") or (args.token if args.token is not None else os.environ.get("FLOW_TOKEN", ""))
+        token = os.environ.get("AG_UI_TOKEN", "")
         if args.command == "merge":
             labels = (args.base, args.flow1, args.flow2)
             workflows = [get_workflow(args.base_url, token, name, args.env, args.timeout) for name in labels]

@@ -32,8 +32,8 @@ class CompareTests(unittest.TestCase):
             render_comparison({"nodes": []}, {"nodes": []}, "a", "b")
         self.assertIn("No differences.", output.getvalue())
 
-    def test_compare_uses_ui_token_and_env(self):
-        with patch.dict("os.environ", {"UI_TOKEN": "ui"}), patch("cli.get_workflow", return_value={"nodes": []}) as fetch, contextlib.redirect_stdout(io.StringIO()):
-            self.assertEqual(main(["compare", "a", "b", "--env", "prod", "--token", "other"]), 0)
+    def test_compare_uses_ag_ui_token_and_env(self):
+        with patch.dict("os.environ", {"AG_UI_TOKEN": "ui"}), patch("cli.get_workflow", return_value={"nodes": []}) as fetch, contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(main(["compare", "a", "b", "--env", "prod"]), 0)
         self.assertEqual([call.args[2] for call in fetch.call_args_list], ["a", "b"])
         self.assertTrue(all(call.args[1] == "ui" and call.args[3] == "prod" for call in fetch.call_args_list))

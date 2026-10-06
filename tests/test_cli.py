@@ -10,19 +10,20 @@ from client import PlatformError, list_workflows
 
 
 class WorkflowTests(unittest.TestCase):
-    def test_token_option_overrides_environment(self):
-        with patch.dict("os.environ", {"UI_TOKEN": "", "FLOW_TOKEN": "environment-token"}), patch("cli.list_workflows", return_value=[]) as listing, contextlib.redirect_stdout(io.StringIO()):
-            self.assertEqual(main(["list", "--token", "argument-token"]), 0)
-            self.assertEqual(listing.call_args.args[1], "argument-token")
+    def test_ag_ui_token_from_environment(self):
+        with patch.dict("os.environ", {"AG_UI_TOKEN": "environment-token"}), patch("cli.list_workflows", return_value=[]) as listing, contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(main(["list"]), 0)
             self.assertEqual(listing.call_args.args[1], "environment-token")
 
-    def test_ui_token_precedes_flow_token(self):
-        with patch.dict("os.environ", {"UI_TOKEN": "ui-token", "FLOW_TOKEN": "flow-token"}), patch("cli.list_workflows", return_value=[]) as listing, contextlib.redirect_stdout(io.StringIO()):
+    def test_legacy_token_variables_are_ignored(self):
+        with patch.dict("os.environ", {"AG_UI_TOKEN": "", "UI_TOKEN": "ui-token", "FLOW_TOKEN": "flow-token"}), patch("cli.list_workflows", return_value=[]) as listing, contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(main(["list"]), 0)
-            self.assertEqual(listing.call_args.args[1], "ui-token")
-            self.assertEqual(main(["list", "--token", "explicit-token"]), 0)
-            self.assertEqual(listing.call_args.args[1], "ui-token")
+            self.assertEqual(listing.call_args.args[1], "")
+
+    def test_token_option_is_rejected(self):
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as error:
+            main(["list", "--token", "argument-token"])
+        self.assertEqual(error.exception.code, 2)
 
     def test_request_and_sorting(self):
         response = io.BytesIO(json.dumps({"skills": [{"name": "z"}, {"name": "Alpha"}]}).encode())
@@ -56,9 +57,9 @@ class WorkflowTests(unittest.TestCase):
 
     def test_missing_token_returns_error(self):
         output = io.StringIO()
-        with patch.dict("os.environ", {"UI_TOKEN": "", "FLOW_TOKEN": ""}), contextlib.redirect_stderr(output):
+        with patch.dict("os.environ", {"AG_UI_TOKEN": ""}), contextlib.redirect_stderr(output):
             self.assertEqual(main(["list"]), 1)
-        self.assertIn("FLOW_TOKEN", output.getvalue())
+        self.assertIn("AG_UI_TOKEN", output.getvalue())
 
     def test_empty_and_zero_version(self):
         output = io.StringIO()

@@ -15,7 +15,7 @@ def get_json(base_url: str, token: str, path: str, env: str | None, timeout: flo
     if parsed.scheme not in {"http", "https"} or not parsed.netloc or parsed.query or parsed.fragment:
         raise PlatformError("Base URL must be an HTTP(S) URL without a query or fragment.")
     if not token.strip():
-        raise PlatformError("Set UI_TOKEN or FLOW_TOKEN, or pass --token with an Okta access token accepted by the platform UI.")
+        raise PlatformError("Set AG_UI_TOKEN with an Okta access token accepted by the platform UI.")
     url = base_url.rstrip("/") + path
     if env:
         url += "?" + urlencode({"env": env})
