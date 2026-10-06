@@ -1,0 +1,118 @@
+Comparing custom_report_builder -> custom_intent_parser (- left, + right)
+
+Prompts (matched by node ID)
+
+Node intent_parser: args.prompt_id
+--- custom_report_builder/intent_parser/args.prompt_id
++++ custom_intent_parser/intent_parser/args.prompt_id
+@@ -1 +1 @@
+-custom-report-builder-intent-parser:01a07ce4
++custom-report-builder-intent-parser:dea96aa8
+
+Resolved prompt text (inline and LangSmith)
+
+Node intent_parser
+--- custom_report_builder/intent_parser/prompt
++++ custom_intent_parser/intent_parser/prompt
+@@ -69,8 +69,8 @@
+ 
+ - Entirely future reporting period (report_start_date > current_date), or a reporting period starting today and extending into the future:
+   search_end_date = current_date.
+-  search_start_date = current_date minus 29 days.
+-  This provides 30 inclusive publication dates.
++  search_start_date = current_date minus 89 days.
++  This provides 90 inclusive publication dates.
+ 
+ - A single past reporting date:
+   search_start_date = that reporting date minus 89 days.
+@@ -82,7 +82,7 @@
+   search_end_date = the earlier of report_end_date and current_date.
+ 
+ After applying these rules, if the search window contains fewer than
+-30 inclusive dates, move search_start_date back to search_end_date minus 29 days.
++90 inclusive dates, move search_start_date back to search_end_date minus 89 days.
+ 
+ For a mixed retrospective and future request, retrieve articles from the
+ retrospective start through current_date, applying the minimum search width
+@@ -98,7 +98,7 @@
+ - report_start_date <= report_end_date.
+ - search_start_date <= search_end_date <= current_date.
+ - Future outlook dates are preserved in the reporting window, but searchdates never extend beyond current_date.
+-- The search window contains at least 30 inclusive dates.
++- The search window contains at least 90 inclusive dates.
+ - Explicit reporting periods are not replaced by the default search lookback.
+ 
+ **Report metadata** 
+@@ -156,8 +156,8 @@
+       "risk_types": [],
+       "search_start_date": "YYYY-MM-DD",
+       "search_end_date": "YYYY-MM-DD",
+-      "start_date": "YYYY-MM-DD",
+-      "end_date": "YYYY-MM-DD",
++      "report_start_date": "YYYY-MM-DD",
++      "report_end_date": "YYYY-MM-DD",
+       "company_context": "",
+       "audience": ""
+     },
+Tool-default and internal-store prompt bodies are not retrieved from LangSmith.
+
+Workflow definitions
+--- custom_report_builder/workflow.json
++++ custom_intent_parser/workflow.json
+@@ -33,7 +33,7 @@
+       }
+     }
+   ],
+-  "description": "Custom report builder — 10 parallel searches (article_limit 30) with retries: 3, dynamic date scoping via intent_parser (intent.search_start_date / intent.search_end_date), dedup, format_articles, report generation, citation processing, format_report_citations, and passthrough output node named 'output'. intent_parser pinned to custom-report-builder-intent-parser:28da042a. Accepts file_contents and current_date_override as optional inputs. Returns value.text, value.link_list_used, value.report_date, value.title, value.period, value.risk_analysis_type, value.region. Added no_results_output passthrough for empty dedup articles (articles=[]) or empty id_url_mapping (id_url_mapping={}). report_generator pinned to custom-report-builder-report-generator:d016b380.",
++  "description": "Copy of custom_report_builder — 10 parallel searches (article_limit 30) with retries: 3, dynamic date scoping via intent_parser (intent.search_start_date / intent.search_end_date for search, intent.report_start_date / intent.report_end_date for report), dedup, format_articles, report generation, citation processing, format_report_citations, and passthrough output node named 'output'. intent_parser pinned to custom-report-builder-intent-parser:a804923d. Accepts file_contents and current_date_override as optional inputs. Returns value.text, value.link_list_used, value.report_date, value.title, value.period, value.risk_analysis_type, value.region. Added no_results_output passthrough for empty dedup articles (articles=[]) or empty id_url_mapping (id_url_mapping={}). report_generator pinned to custom-report-builder-report-generator:89a087ae.",
+   "edges": [
+     {
+       "from": "START",
+@@ -173,7 +173,7 @@
+     }
+   },
+   "memory_enabled": false,
+-  "name": "custom_report_builder",
++  "name": "custom_intent_parser",
+   "nodes": [
+     {
+       "args": {
+@@ -202,7 +202,7 @@
+         "input": "user_prompt: $input.user_prompt\n\nfile_contents: $input.file_contents\n\ncurrent_date: $get_date_step.current_date",
+         "json_mode": true,
+         "model_id": "gpt-5.6-luna",
+-        "prompt_id": "custom-report-builder-intent-parser:01a07ce4",
++        "prompt_id": "custom-report-builder-intent-parser:dea96aa8",
+         "provider": "openai"
+       },
+       "id": "intent_parser",
+@@ -428,7 +428,7 @@
+     },
+     {
+       "args": {
+-        "input": "user_request: $input.user_prompt\n\nintent: $intent_parser.response\n\nformatted_articles: $format_step.formatted_articles\n\ncurrent_date: $get_date_step.current_date",
++        "input": "user_request: $input.user_prompt\n\nintent: $intent_parser.response\n\nformatted_articles: $format_step.formatted_articles\n\ncurrent_date: $get_date_step.current_date\n\nreport_start_date: $intent_parser.response.intent.report_start_date\n\nreport_end_date: $intent_parser.response.intent.report_end_date",
+         "model_id": "gpt-5.6-terra",
+         "prompt_id": "custom-report-builder-report-generator:89a087ae",
+         "provider": "openai"
+@@ -471,12 +471,7 @@
+       "args": {
+         "value": {
+           "link_list_used": "$citations_step.link_list_used",
+-          "period": "$intent_parser.response.intent.period",
+-          "region": "$intent_parser.response.intent.region",
+-          "report_date": "$get_date_step.current_date",
+-          "risk_analysis_type": "$intent_parser.response.intent.risk_analysis_type",
+-          "text": "$format_report_citations_step.text",
+-          "title": "$intent_parser.response.intent.title"
++          "text": "$format_report_citations_step.text"
+         }
+       },
+       "id": "output",
+@@ -506,5 +501,5 @@
+     "output",
+     "no_results_output"
+   ],
+-  "version": "37"
++  "version": "3"
+ }
