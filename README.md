@@ -43,13 +43,15 @@ For command options, run `uv run cli.py <command> --help`.
 
 ## Merge operation
 
+Use merge to prepare changes from one workflow for integration into another, like merging a feature branch into master. For example, `version1` is your working copy and `master` is the shared workflow you want to update.
+
 ```sh
 uv run cli.py merge version1 master
 ```
 
 `merge version1 master` writes prompt text to `merge/<prompt-name>.txt` in the current directory. It uses the target prompt name without its commit suffix, falling back to the node ID for inline prompts. Unsafe filename characters become `_`; filename collisions are errors.
 
-No common base is required. Identical prompts and prompts present on only one side are carried through. Differing prompts get `<<<<<<< version1`, `=======`, and `>>>>>>> master` markers for manual resolution. This prepares local text files; it does not merge workflow definitions or publish changes. Existing output files must be moved before rerunning.
+No common base is required. Identical prompts and prompts present on only one side are carried through. Differing prompts get `<<<<<<< version1`, `=======`, and `>>>>>>> master` markers for manual resolution. Results are saved on disk in `merge/`. You are responsible for reviewing the files, resolving conflicts, and uploading the approved prompts to update the target workflow. The tool does not merge workflow definitions or publish changes. Existing output files must be moved before rerunning.
 
 Exit codes: `0` for success, `1` for errors, and `2` when merge files contain conflicts.
 
